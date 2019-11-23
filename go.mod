@@ -1,4 +1,4 @@
-module github.com/demdxx/config
+module github.com/demdxx/goconfig
 
 go 1.13
 
