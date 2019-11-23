@@ -1,7 +1,7 @@
 # go-config
 
 [![Build Status](https://img.shields.io/travis/demdxx/go-config.svg?logo=travis&style=for-the-badge)](https://travis-ci.org/demdxx/go-config)
-[![Coverage Status](https://img.shields.io/codecov/c/gh/demdxx/go-config.svg?logo=codecov&style=for-the-badge)](https://codecov.io/gh/demdxx/go-config)
+[![Coveralls Status](https://img.shields.io/coveralls/github/demdxx/go-config?style=for-the-badge)](https://codecov.io/gh/demdxx/go-config)
 [![Godocs](http://img.shields.io/badge/godoc-reference-5272B4.svg?style=for-the-badge)](http://godoc.org/github.com/demdxx/go-config)
 
 Golang config initialization module which provides simple functionality for the loading of configs based on **struct**ures description.
