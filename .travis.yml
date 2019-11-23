@@ -3,7 +3,7 @@ language: go
 env:
   global:
     - GO111MODULE=on
-    - COVERALLS_TOKEN=YHmOMFGxPRLh0vXLy5lV2DxXheb4jjrWP
+    - COVERALLS_TOKEN=VTxAU6fjYbVtBpDuMsd0gGA9BwHDZO9du
 
 matrix:
   include:
