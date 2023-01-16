@@ -3,7 +3,7 @@ package goconfig
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -18,7 +18,7 @@ type configFilepath interface {
 	ConfigFilepath() string
 }
 
-type config interface{}
+type config any
 
 // Load data from file
 func Load(cfg config) (err error) {
@@ -61,7 +61,7 @@ func loadFile(cfg config, file string) error {
 	}
 	defer f.Close()
 
-	data, err := ioutil.ReadAll(f)
+	data, err := io.ReadAll(f)
 	if err != nil {
 		return err
 	}
@@ -73,17 +73,17 @@ func loadFile(cfg config, file string) error {
 	case ".json":
 		return json.Unmarshal(data, cfg)
 	case ".hcl":
-		var root interface{}
+		var root any
 		// For some specific HCL module not always work as expected
 		// so this is a hack to fix it
-		if err := hcl.Unmarshal(data, &root); err != nil {
+		if err = hcl.Unmarshal(data, &root); err != nil {
 			return err
 		}
 		if data, err = json.Marshal(root); err != nil {
 			return err
 		}
 		// Skip the error because of HCL converts structures into arrays of structs
-		json.Unmarshal(data, cfg)
+		_ = json.Unmarshal(data, cfg)
 		return hcl.Unmarshal(data, cfg)
 	}
 	return fmt.Errorf("unsupported config ext: %s", ext)
