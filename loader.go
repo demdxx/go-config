@@ -20,36 +20,84 @@ type configFilepath interface {
 
 type config any
 
-// Load data from file
-func Load(cfg config) (err error) {
-	// Set defaults for config
-	defaults.SetDefaults(cfg)
+type options struct {
+	defaults bool
+	args     bool
+	file     bool
+	env      bool
+}
 
-	// parse command line arguments
-	if len(os.Args) > 1 {
-		if err = configure.ParseCommandLine(cfg, os.Args[1:]); err != nil {
-			return err
+func WithDefaults() func(*options) {
+	return func(o *options) {
+		o.defaults = true
+	}
+
+}
+
+func WithArgs() func(*options) {
+	return func(o *options) {
+		o.args = true
+	}
+}
+
+func WithFile() func(*options) {
+	return func(o *options) {
+		o.file = true
+	}
+}
+
+func WithEnv() func(*options) {
+	return func(o *options) {
+		o.env = true
+	}
+}
+
+// Load data from file
+func Load(cfg config, opts ...func(*options)) (err error) {
+	o := &options{}
+	if opts == nil {
+		o.env = true
+		o.args = true
+		o.file = true
+		o.defaults = true
+	} else {
+		for _, opt := range opts {
+			opt(o)
 		}
 	}
 
-	// parse config from file
-	if configFile, _ := cfg.(configFilepath); configFile != nil {
-		if filepath := configFile.ConfigFilepath(); len(filepath) > 0 {
-			if err = loadFile(cfg, filepath); err != nil {
+	// Set defaults for config
+	if o.defaults {
+		defaults.SetDefaults(cfg)
+	}
+
+	// parse command line arguments
+	if o.args {
+		if len(os.Args) > 1 {
+			if err = configure.ParseCommandLine(cfg, os.Args[1:]); err != nil {
 				return err
 			}
 		}
 	}
 
-	// parse environment variables
-	if err = env.Parse(cfg); err != nil {
-		return err
+	// parse config from file
+	if o.file {
+		if configFile, _ := cfg.(configFilepath); configFile != nil {
+			if filepath := configFile.ConfigFilepath(); len(filepath) > 0 {
+				if err = loadFile(cfg, filepath); err != nil {
+					return err
+				}
+			}
+		}
 	}
 
-	// parse command line arguments
-	if len(os.Args) > 1 {
-		err = configure.ParseCommandLine(cfg, os.Args[1:])
+	// parse environment variables
+	if o.env {
+		if err = env.Parse(cfg); err != nil {
+			return err
+		}
 	}
+
 	return err
 }
 

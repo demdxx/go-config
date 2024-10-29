@@ -62,6 +62,20 @@ func Test_ConfigLoadEnvError(t *testing.T) {
 	assert.Error(t, Load(&conf))
 }
 
+func Test_ConfigLoadWithEnvOptsOnly(t *testing.T) {
+	var conf testConfig
+
+	os.Args = []string{"test", "--http-listen=addr:test"}
+	os.Setenv("SERVICE_NAME", "test-servername")
+	os.Setenv("LOG_ADDR", "test-logger-addr")
+	os.Setenv("LOG_LEVEL", "error-loglevel")
+
+	assert.NoError(t, Load(&conf, WithEnv()))
+	assert.Equal(t, "test-servername", conf.ServiceName)
+	assert.Equal(t, "test-logger-addr", conf.LogAddr)
+	assert.Equal(t, "error-loglevel", conf.LogLevel)
+}
+
 func Test_ConfigLoadCliError(t *testing.T) {
 	var conf testConfig
 	os.Args = []string{"test", "-v"}
