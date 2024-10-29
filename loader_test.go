@@ -53,15 +53,6 @@ func Test_ConfigLoadEnv(t *testing.T) {
 	assert.Equal(t, "addr:test", conf.Server.HTTP.Listen)
 }
 
-func Test_ConfigLoadEnvError(t *testing.T) {
-	var conf testConfig
-
-	os.Args = []string{}
-	os.Setenv("SERVER_HTTP_READ_TIMEOUT", "error")
-
-	assert.Error(t, Load(&conf))
-}
-
 func Test_ConfigLoadWithEnvOptsOnly(t *testing.T) {
 	var conf testConfig
 
@@ -74,6 +65,15 @@ func Test_ConfigLoadWithEnvOptsOnly(t *testing.T) {
 	assert.Equal(t, "test-servername", conf.ServiceName)
 	assert.Equal(t, "test-logger-addr", conf.LogAddr)
 	assert.Equal(t, "error-loglevel", conf.LogLevel)
+}
+
+func Test_ConfigLoadEnvError(t *testing.T) {
+	var conf testConfig
+
+	os.Args = []string{}
+	os.Setenv("SERVER_HTTP_READ_TIMEOUT", "error")
+
+	assert.Error(t, Load(&conf))
 }
 
 func Test_ConfigLoadCliError(t *testing.T) {
