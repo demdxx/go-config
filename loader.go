@@ -33,7 +33,6 @@ func WithDefaults() func(*options) {
 	return func(o *options) {
 		o.defaults = true
 	}
-
 }
 
 // WithArgs parse command line arguments
@@ -78,11 +77,9 @@ func Load(cfg config, opts ...func(*options)) (err error) {
 	}
 
 	// parse command line arguments
-	if o.args {
-		if len(os.Args) > 1 {
-			if err = configure.ParseCommandLine(cfg, os.Args[1:]); err != nil {
-				return err
-			}
+	if o.args && len(os.Args) > 1 {
+		if err = configure.ParseCommandLine(cfg, os.Args[1:]); err != nil {
+			return err
 		}
 	}
 
@@ -92,12 +89,10 @@ func Load(cfg config, opts ...func(*options)) (err error) {
 			if err = loadFile(cfg, o.filePath); err != nil {
 				return err
 			}
-		} else {
-			if configFile, _ := cfg.(configFilepath); configFile != nil {
-				if filepath := configFile.ConfigFilepath(); len(filepath) > 0 {
-					if err = loadFile(cfg, filepath); err != nil {
-						return err
-					}
+		} else if configFile, _ := cfg.(configFilepath); configFile != nil {
+			if filepath := configFile.ConfigFilepath(); len(filepath) > 0 {
+				if err = loadFile(cfg, filepath); err != nil {
+					return err
 				}
 			}
 		}

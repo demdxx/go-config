@@ -46,7 +46,7 @@ func Test_ConfigLoadEnv(t *testing.T) {
 	os.Setenv("LOG_ADDR", "test-logger-addr")
 	os.Setenv("LOG_LEVEL", "error-loglevel")
 
-	assert.NoError(t, Load(&conf))
+	assert.NoError(t, Load(&conf, WithArgs(), WithDefaults(), WithEnv()))
 	assert.Equal(t, "test-servername", conf.ServiceName)
 	assert.Equal(t, "test-logger-addr", conf.LogAddr)
 	assert.Equal(t, "error-loglevel", conf.LogLevel)
@@ -73,7 +73,7 @@ func Test_ConfigLoadEnvError(t *testing.T) {
 	os.Args = []string{}
 	os.Setenv("SERVER_HTTP_READ_TIMEOUT", "error")
 
-	assert.Error(t, Load(&conf))
+	assert.Error(t, Load(&conf, WithEnv(), WithDefaults()))
 }
 
 func Test_ConfigLoadCliError(t *testing.T) {
@@ -102,7 +102,7 @@ func Test_ConfigLoadFile(t *testing.T) {
 	for _, configFile := range configs {
 		var conf testConfig
 		conf.configFilepath = configFile
-		assert.NoError(t, Load(&conf))
+		assert.NoError(t, Load(&conf, WithDefaults(), WithArgs(), WithEnv(), WithFile("")))
 
 		assert.Equal(t, "test-servername", conf.ServiceName)
 		assert.Equal(t, "logstash", conf.LogAddr)
@@ -119,8 +119,7 @@ func Test_ConfigLoadFileUnsupported(t *testing.T) {
 	os.Setenv("SERVER_HTTP_READ_TIMEOUT", "")
 
 	var conf testConfig
-	conf.configFilepath = "test-assets/config.unsupported"
-	assert.Error(t, Load(&conf))
+	assert.Error(t, Load(&conf, WithFile("test-assets/config.unsupported")))
 }
 
 func Test_ConfigLoadFileOpenError(t *testing.T) {
@@ -130,5 +129,5 @@ func Test_ConfigLoadFileOpenError(t *testing.T) {
 
 	var conf testConfig
 	conf.configFilepath = "undefined"
-	assert.Error(t, Load(&conf))
+	assert.Error(t, Load(&conf, WithFile("")))
 }
