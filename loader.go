@@ -24,6 +24,7 @@ type options struct {
 	defaults bool
 	args     bool
 	file     bool
+	filePath string
 	env      bool
 }
 
@@ -43,9 +44,10 @@ func WithArgs() func(*options) {
 }
 
 // WithFile parse config from file
-func WithFile() func(*options) {
+func WithFile(path string) func(*options) {
 	return func(o *options) {
 		o.file = true
+		o.filePath = path
 	}
 }
 
@@ -86,10 +88,16 @@ func Load(cfg config, opts ...func(*options)) (err error) {
 
 	// parse config from file
 	if o.file {
-		if configFile, _ := cfg.(configFilepath); configFile != nil {
-			if filepath := configFile.ConfigFilepath(); len(filepath) > 0 {
-				if err = loadFile(cfg, filepath); err != nil {
-					return err
+		if o.filePath != "" {
+			if err = loadFile(cfg, o.filePath); err != nil {
+				return err
+			}
+		} else {
+			if configFile, _ := cfg.(configFilepath); configFile != nil {
+				if filepath := configFile.ConfigFilepath(); len(filepath) > 0 {
+					if err = loadFile(cfg, filepath); err != nil {
+						return err
+					}
 				}
 			}
 		}
