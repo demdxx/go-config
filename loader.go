@@ -27,6 +27,7 @@ type options struct {
 	env      bool
 }
 
+// WithDefaults set defaults for config
 func WithDefaults() func(*options) {
 	return func(o *options) {
 		o.defaults = true
@@ -34,18 +35,21 @@ func WithDefaults() func(*options) {
 
 }
 
+// WithArgs parse command line arguments
 func WithArgs() func(*options) {
 	return func(o *options) {
 		o.args = true
 	}
 }
 
+// WithFile parse config from file
 func WithFile() func(*options) {
 	return func(o *options) {
 		o.file = true
 	}
 }
 
+// WithEnv parse environment variables
 func WithEnv() func(*options) {
 	return func(o *options) {
 		o.env = true
