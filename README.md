@@ -1,4 +1,4 @@
-# goconfig
+# GoConfig
 
 [![Build Status](https://github.com/demdxx/goconfig/workflows/run%20tests/badge.svg)](https://github.com/demdxx/goconfig/actions?workflow=run%20tests)
 [![Go Report Card](https://goreportcard.com/badge/github.com/demdxx/goconfig)](https://goreportcard.com/report/github.com/demdxx/goconfig)
@@ -118,18 +118,18 @@ package main
 import (
  "log"
 
- configLoader "github.com/demdxx/goconfig"
+ "github.com/demdxx/goconfig"
  "your_project/config"
 )
 
 func init() {
  // Example: Load configuration with defaults and environment variables only
- options := []func(*configLoader.Options){
-  configLoader.WithDefaults(),
-  configLoader.WithEnv(),
+ options := []goconfig.Option{
+  goconfig.WithDefaults(),
+  goconfig.WithEnv(),
  }
 
- if err := configLoader.Load(&config.Config, options...); err != nil {
+ if err := goconfig.Load(&config.Config, options...); err != nil {
   log.Fatalf("Failed to load configuration: %v", err)
  }
 }
@@ -143,7 +143,7 @@ Available Options:
 
 - `WithDefaults()`: Sets default values for the configuration.
 - `WithEnv()`: Parses environment variables.
-- `WithArgs()`: Parses command-line arguments.
+- `WithArgs(...string)`: Parses command-line arguments.
 - `WithFile(path string)`: Loads configuration from a specified file.
 
 ## Example
@@ -194,19 +194,19 @@ package main
 import (
  "log"
 
- configLoader "github.com/demdxx/goconfig"
+ "github.com/demdxx/goconfig"
  "your_project/config"
 )
 
 func init() {
  // Load configuration with defaults, environment variables, and a specific config file
- options := []func(*configLoader.Options){
-  configLoader.WithDefaults(),
-  configLoader.WithEnv(),
-  configLoader.WithFile("config.yaml"),
+ options := []goconfig.Option{
+  goconfig.WithDefaults(),
+  goconfig.WithEnv(),
+  goconfig.WithFile("config.yaml"),
  }
 
- if err := configLoader.Load(&config.Config, options...); err != nil {
+ if err := goconfig.Load(&config.Config, options...); err != nil {
   log.Fatalf("Failed to load configuration: %v", err)
  }
 }
@@ -219,7 +219,6 @@ func main() {
 ## Dependencies
 
 - github.com/caarlos0/env
-- github.com/gravitational/configure
 - github.com/hashicorp/hcl
 - github.com/mcuadros/go-defaults
 
