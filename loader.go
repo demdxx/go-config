@@ -55,8 +55,8 @@ func defaultsParser(cfg config) error {
 // argsParser parse command line arguments
 func argsParser(args ...string) extParser {
 	return func(cfg config) error {
-		if len(args) == 0 && len(os.Args) > 1 {
-			args = os.Args[1:]
+		if len(args) == 0 {
+			return nil
 		}
 		flags, err := parseCommandFlags(args)
 		if err != nil {

@@ -1,5 +1,7 @@
 package goconfig
 
+import "os"
+
 type (
 	extParser func(cfg config) error
 	Option    func(*options)
@@ -17,7 +19,18 @@ func WithDefaults() Option {
 }
 
 // WithArgs parse command line arguments
-func WithArgs(args ...string) Option {
+func WithArgs() Option {
+	return func(o *options) {
+		args := os.Args
+		if len(args) > 0 {
+			args = args[1:]
+		}
+		o.parsers = append(o.parsers, argsParser(args...))
+	}
+}
+
+// WithCustomArgs parse custom arguments
+func WithCustomArgs(args ...string) Option {
 	return func(o *options) {
 		o.parsers = append(o.parsers, argsParser(args...))
 	}
