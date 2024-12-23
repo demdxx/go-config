@@ -29,7 +29,7 @@ type testConfig struct {
 	ServiceName    string `json:"service_name" yaml:"service_name" env:"SERVICE_NAME" default:"disk"`
 
 	LogAddr  string `json:"log_addr" yaml:"log_addr" default:"" env:"LOG_ADDR"`
-	LogLevel string `json:"log_level" yaml:"log_level" default:"debug" env:"LOG_LEVEL"`
+	LogLevel string `json:"log_level" yaml:"log_level" default:"debug" env:"LOG_LEVEL" cli:"log-level" short-cli:"l"`
 
 	Server serverConfig `json:"server" yaml:"server"`
 }
@@ -38,36 +38,36 @@ func (cfg *testConfig) ConfigFilepath() string {
 	return cfg.configFilepath
 }
 
-func Test_ConfigLoadEnv(t *testing.T) {
+func TestConfigLoadEnv(t *testing.T) {
 	var conf testConfig
 
-	os.Args = []string{"test", "--http-listen=addr:test"}
+	os.Args = []string{"test", "--http-listen=addr:test", "-l", "error"}
 	os.Setenv("SERVICE_NAME", "test-servername")
 	os.Setenv("LOG_ADDR", "test-logger-addr")
 	os.Setenv("LOG_LEVEL", "error-loglevel")
 
-	assert.NoError(t, Load(&conf, WithArgs(), WithDefaults(), WithEnv()))
+	assert.NoError(t, Load(&conf, WithDefaults(), WithEnv(), WithArgs()))
 	assert.Equal(t, "test-servername", conf.ServiceName)
 	assert.Equal(t, "test-logger-addr", conf.LogAddr)
-	assert.Equal(t, "error-loglevel", conf.LogLevel)
+	assert.Equal(t, "error", conf.LogLevel)
 	assert.Equal(t, "addr:test", conf.Server.HTTP.Listen)
 }
 
-func Test_ConfigLoadWithEnvOptsOnly(t *testing.T) {
+func TestConfigLoadWithEnvOptsOnly(t *testing.T) {
 	var conf testConfig
 
-	os.Args = []string{"test", "--http-listen=addr:test"}
+	os.Args = []string{"test", "--http-listen", "addr:test"}
 	os.Setenv("SERVICE_NAME", "test-servername")
 	os.Setenv("LOG_ADDR", "test-logger-addr")
 	os.Setenv("LOG_LEVEL", "error-loglevel")
 
-	assert.NoError(t, Load(&conf, WithEnv()))
+	assert.NoError(t, Load(&conf, WithEnv(), WithArgs()))
 	assert.Equal(t, "test-servername", conf.ServiceName)
 	assert.Equal(t, "test-logger-addr", conf.LogAddr)
 	assert.Equal(t, "error-loglevel", conf.LogLevel)
 }
 
-func Test_ConfigLoadEnvError(t *testing.T) {
+func TestConfigLoadEnvError(t *testing.T) {
 	var conf testConfig
 
 	os.Args = []string{}
@@ -76,13 +76,13 @@ func Test_ConfigLoadEnvError(t *testing.T) {
 	assert.Error(t, Load(&conf, WithEnv(), WithDefaults()))
 }
 
-func Test_ConfigLoadCliError(t *testing.T) {
+func TestConfigLoadCliError(t *testing.T) {
 	var conf testConfig
 	os.Args = []string{"test", "-v"}
 	assert.Error(t, Load(&conf))
 }
 
-func Test_ConfigLoadFile(t *testing.T) {
+func TestConfigLoadFile(t *testing.T) {
 	configs := []string{
 		"test-assets/config.hcl",
 		"test-assets/config.json",
@@ -113,7 +113,7 @@ func Test_ConfigLoadFile(t *testing.T) {
 	}
 }
 
-func Test_ConfigLoadFileUnsupported(t *testing.T) {
+func TestConfigLoadFileUnsupported(t *testing.T) {
 	// Reset CLI and ENV parameters
 	os.Args = []string{}
 	os.Setenv("SERVER_HTTP_READ_TIMEOUT", "")
@@ -122,7 +122,7 @@ func Test_ConfigLoadFileUnsupported(t *testing.T) {
 	assert.Error(t, Load(&conf, WithFile("test-assets/config.unsupported")))
 }
 
-func Test_ConfigLoadFileOpenError(t *testing.T) {
+func TestConfigLoadFileOpenError(t *testing.T) {
 	// Reset CLI and ENV parameters
 	os.Args = []string{}
 	os.Setenv("SERVER_HTTP_READ_TIMEOUT", "")

@@ -1,6 +1,7 @@
 package goconfig
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,9 +10,10 @@ import (
 	"strings"
 
 	env "github.com/caarlos0/env/v6"
-	"github.com/gravitational/configure"
+	"github.com/demdxx/gocast/v2"
 	"github.com/hashicorp/hcl"
 	defaults "github.com/mcuadros/go-defaults"
+	"gopkg.in/yaml.v3"
 )
 
 type configFilepath interface {
@@ -20,92 +22,82 @@ type configFilepath interface {
 
 type config any
 
-type options struct {
-	defaults bool
-	args     bool
-	file     bool
-	filePath string
-	env      bool
-}
-
-// WithDefaults set defaults for config
-func WithDefaults() func(*options) {
-	return func(o *options) {
-		o.defaults = true
-	}
-}
-
-// WithArgs parse command line arguments
-func WithArgs() func(*options) {
-	return func(o *options) {
-		o.args = true
-	}
-}
-
-// WithFile parse config from file
-func WithFile(path string) func(*options) {
-	return func(o *options) {
-		o.file = true
-		o.filePath = path
-	}
-}
-
-// WithEnv parse environment variables
-func WithEnv() func(*options) {
-	return func(o *options) {
-		o.env = true
-	}
-}
-
 // Load data from file
-func Load(cfg config, opts ...func(*options)) (err error) {
-	o := &options{}
-	if opts == nil {
-		o.env = true
-		o.args = true
-		o.file = true
-		o.defaults = true
-	} else {
-		for _, opt := range opts {
-			opt(o)
-		}
+func Load(cfg config, opts ...Option) error {
+	var confOpt options
+
+	// Apply options
+	for _, opt := range opts {
+		opt(&confOpt)
 	}
 
-	// Set defaults for config
-	if o.defaults {
-		defaults.SetDefaults(cfg)
+	// Apply defaults if needed
+	if len(confOpt.parsers) == 0 {
+		confOpt.parsers = []extParser{defaultsParser, argsParser(), fileParser(""), envParser}
 	}
 
-	// parse command line arguments
-	if o.args && len(os.Args) > 1 {
-		if err = configure.ParseCommandLine(cfg, os.Args[1:]); err != nil {
+	// Apply parsers
+	for _, parser := range confOpt.parsers {
+		if err := parser(cfg); err != nil {
 			return err
 		}
 	}
 
-	// parse config from file
-	if o.file {
-		if o.filePath != "" {
-			if err = loadFile(cfg, o.filePath); err != nil {
-				return err
-			}
-		} else if configFile, _ := cfg.(configFilepath); configFile != nil {
-			if filepath := configFile.ConfigFilepath(); len(filepath) > 0 {
-				if err = loadFile(cfg, filepath); err != nil {
-					return err
+	return nil
+}
+
+// defaultsParser set defaults for config
+func defaultsParser(cfg config) error {
+	defaults.SetDefaults(cfg)
+	return nil
+}
+
+// argsParser parse command line arguments
+func argsParser(args ...string) extParser {
+	return func(cfg config) error {
+		if len(args) == 0 && len(os.Args) > 1 {
+			args = os.Args[1:]
+		}
+		flags, err := parseCommandFlags(args)
+		if err != nil {
+			return err
+		}
+		if len(flags) == 0 {
+			return nil
+		}
+		return gocast.StructWalk(context.Background(), cfg, func(ctx context.Context, _ gocast.StructWalkObject, field gocast.StructWalkField, _ []string) error {
+			if cliField := field.Tag("cli"); cliField != "" {
+				if val, ok := flags[cliField]; ok {
+					return field.SetValue(ctx, val)
 				}
 			}
-		}
+			if cliField := field.Tag("short-cli"); cliField != "" {
+				if val, ok := flags[cliField]; ok {
+					return field.SetValue(ctx, val)
+				}
+			}
+			return nil
+		})
 	}
+}
 
-	// parse environment variables
-	if o.env {
-		if err = env.Parse(cfg); err != nil {
-			return err
+// fileParser parse config from file
+func fileParser(path string) extParser {
+	return func(cfg config) error {
+		if path != "" {
+			return loadFile(cfg, path)
+		} else if configFile, _ := cfg.(configFilepath); configFile != nil {
+			if filepath := configFile.ConfigFilepath(); len(filepath) > 0 {
+				return loadFile(cfg, filepath)
+			}
 		}
+		return nil
 	}
+}
 
-	return err
+// envParser parse environment variables
+func envParser(cfg config) error {
+	return env.Parse(cfg)
 }
 
 // loadFile config from file path
@@ -124,7 +116,8 @@ func loadFile(cfg config, file string) error {
 	ext := strings.ToLower(filepath.Ext(file))
 	switch ext {
 	case ".yml", ".yaml":
-		return configure.ParseYAML(data, cfg)
+		// return configure.ParseYAML(data, cfg)
+		return yaml.Unmarshal(data, cfg)
 	case ".json":
 		return json.Unmarshal(data, cfg)
 	case ".hcl":
